@@ -3,12 +3,15 @@
 <title>Day 1 Code</title>
 <script>
 function process() {
-    console.log('handler!')
+    var txt = document.getElementById('text');
+    var txt_out = document.getElementById('text_out');
+    txt_out.innerHTML = txt.value.toUpperCase();
 }
 </script>
 </head>
 <body>
 Hello world!
-<p><button onclick="process()">Process</button></p>
+<p><input type="text" id="text" size="50"><button onclick="process()">Process</button></p>
+<div id="text_out"></div>
 </body>
 </html>
