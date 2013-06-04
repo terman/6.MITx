@@ -1,5 +1,5 @@
-// <expression> ::= <term> | <term> "+" <expression> | <term> "-" <expression>
-// <term>       ::= <unary> | <unary> "*" <term> | <unary> "/" <term>
+// <expression> ::= <term> | <expression> "+" <term> | <expression> "-" <term>
+// <term>       ::= <unary> | <term> "*" <unary> | <term> "/" <unary>
 // <unary>      ::= <factor> | "-" <factor> | "+" <factor>
 // <factor>     ::= <number> | "(" <expression> ")"
 
@@ -13,25 +13,31 @@ function read_token(t,tokens) {
 }
 
 function parse_expression(tokens) {
-    var term = parse_term(tokens);
-    if (read_token('+',tokens)) {
-        return ['+',term,parse_expression(tokens)];
+    var expression = parse_term(tokens);
+    while (true) {
+        if (read_token('+', tokens)) {
+            expression = ['+', expression, parse_term(tokens)];
+        }
+        else if (read_token('-', tokens)) {
+            expression = ['-', expression, parse_term(tokens)];
+        }
+        else break;
     }
-    else if (read_token('-',tokens)) {
-        return ['-',term,parse_expression(tokens)];
-    }
-    else return term;
+    return expression;
 }
 
 function parse_term(tokens) {
-    var unary = parse_unary(tokens);
-    if (read_token('*',tokens)) {
-        return ['*',unary,parse_term(tokens)];
+    var term = parse_unary(tokens);
+    while (true) {
+        if (read_token('*', tokens)) {
+            term = ['*', term, parse_unary(tokens)];
+        }
+        else if (read_token('/', tokens)) {
+            term = ['/', term, parse_unary(tokens)]
+        }
+        else break;
     }
-    else if (read_token('/',tokens)) {
-        return ['/',unary,parse_term(tokens)]
-    }
-    else return unary;
+    return term;
 }
 
 function parse_unary(tokens) {
@@ -39,14 +45,13 @@ function parse_unary(tokens) {
         return ['neg',parse_factor(tokens)];
     }
     else if (read_token('+',tokens)) {
-        return parse_factor(tokens);
     }
-    else return parse_factor(tokens);
+    return parse_factor(tokens);
 }
 
 function parse_factor(tokens) {
     if (read_token('(',tokens)) {
-        gitvar exp = parse_expression(tokens);
+        var exp = parse_expression(tokens);
         if (read_token(')',tokens)) {
             return exp;
         } else throw 'Missing ) in expression';
@@ -63,6 +68,7 @@ function parse_factor(tokens) {
 function evaluate(tree) {
     if (typeof tree == 'number') return tree;
     else {
+        // expecting [operator,tree,tree]
         var args = tree.slice(1).map(evaluate);
         switch (tree[0]) {
             case 'neg': return -args[0];
