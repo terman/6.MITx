@@ -1,8 +1,3 @@
-// <expression> ::= <term> | <expression> "+" <term> | <expression> "-" <term>
-// <term>       ::= <unary> | <term> "*" <unary> | <term> "/" <unary>
-// <unary>      ::= <factor> | "-" <factor> | "+" <factor>
-// <factor>     ::= <number> | "(" <expression> ")"
-
 // if first token is t, consume it and return true
 function read_token(t,tokens) {
     if (tokens.length > 0 && tokens[0] == t) {
@@ -12,6 +7,12 @@ function read_token(t,tokens) {
     return false;
 }
 
+// builds parse tree for following BNF.  Tree is either a number or
+// or an array of the form [operator,tree,tree].
+// <expression> ::= <term> | <expression> "+" <term> | <expression> "-" <term>
+// <term>       ::= <unary> | <term> "*" <unary> | <term> "/" <unary>
+// <unary>      ::= <factor> | "-" <factor> | "+" <factor>
+// <factor>     ::= <number> | "(" <expression> ")"
 function parse_expression(tokens) {
     var expression = parse_term(tokens);
     while (true) {
