@@ -58,7 +58,7 @@ function parse_factor(tokens) {
         } else throw 'Missing ) in expression';
     }
     else if (tokens.length > 0) {
-        var n = parseInt(tokens[0],10);
+        var n = parseFloat(tokens[0],10);
         if (isNaN(n)) throw 'Expected a number, got '+String(tokens[0]);
         tokens.shift();
         return n;
@@ -84,7 +84,7 @@ function evaluate(tree) {
 
 function calculate(text) {
     // pattern matches integers, parens and the operators +, -, *, /
-    var pattern = /\d+|\+|\-|\*|\/|\(|\)/g;
+    var pattern = /([0-9]*\.)?[0-9]+([eE][-+]?[0-9]+)?|\+|\-|\*|\/|\(|\)/g;
     var tokens = text.match(pattern);
     try {
         var tree = parse_expression(tokens);
@@ -98,7 +98,8 @@ function calculate(text) {
 function setup_calc(div) {
     var input = $('<input></input>',{type: 'text', size: 50});
     var output = $('<div></div>');
-    var button = $('<button>Calculate</button>').bind("click", function() {
+    var button = $('<button>Calculate</button>');
+    button.bind("click", function() {
         output.html(String(calculate(input.val())));
     });
     
