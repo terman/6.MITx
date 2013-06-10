@@ -3,12 +3,13 @@
 <title>Test Code</title>
 <script>
 function calculate() {
-    console.log('click handler!');
+    var input = $('#text');
+    console.log(input.val());
 }
 </script>
 </head>
 <body>
 Hello world!
-<p><button onclick="calculate()">Calculate</button></button></p>
+<p><input type="text" size="50" id="text"><button onclick="calculate()">Calculate</button></button></p>
 </body>
 </html>

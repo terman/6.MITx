@@ -82,7 +82,7 @@ function parse_factor(tokens) {
         } else throw 'Missing ) in expression';
     }
     else if (tokens.length > 0) {
-        var token = tokens.shift();
+        var token = tokens.shift();  // extract first token from array
         if (token.search(/[a-zA-Z_]\w*/) != -1) {
             // variable name
             if (read_token('(',tokens)) {
@@ -91,8 +91,8 @@ function parse_factor(tokens) {
                 // code assumes at least one argument
                 while (true) {
                     args.push(parse_expression(tokens));
-                    if (read_token(',')) continue;
-                    if (read_token(')')) break;
+                    if (read_token(',',tokens)) continue;
+                    if (read_token(')',tokens)) break;
                     throw "Expected comma or close paraen in function call";
                 }
                 if (!(token in built_in_functions))
@@ -111,15 +111,18 @@ function parse_factor(tokens) {
 }
 
 function evaluate(tree,environment) {
+    if (environment === undefined) environment = built_in_environment;
     if (typeof tree == 'number') return tree;
     else if (typeof tree == 'string') return environment[tree];  // might be undefined
     else {
-        // expecting [operator,tree,tree]
-        var args = tree.slice(1).map(evaluate);
+        // expecting [operator,tree,...]
+        var args = tree.slice(1).map(function(subtree){return evaluate(subtree,environment)});
         if (tree[0].search(/^call /) != -1) {
             // call of built-in function
-            var f = tree[0].slice(4);
-            return built_in_functions[f].apply(args);
+            var f = tree[0].slice(5);
+            f = built_in_functions[f];
+            if (f === undefined) throw "Unknown function: "+f;
+            return f.apply(undefined,args);
         }
         // otherwise its just an operator
         else switch (tree[0]) {
@@ -133,14 +136,17 @@ function evaluate(tree,environment) {
     }
 }
 
-function calculate(text) {
+function parse(text) {
     // pattern matches integers, variable names, parens and the operators +, -, *, /
     var pattern = /([0-9]*\.)?[0-9]+([eE][\-+]?[0-9]+)?|[a-zA-Z_]\w*|\+|\-|\*|\/|\(|\)/g;
     var tokens = text.match(pattern);
+    return parse_expression(tokens);
+}
+
+function calculate(text) {
     try {
-        var tree = parse_expression(tokens);
-        //return JSON.stringify(tree);
-        return evaluate(tree);
+        var tree = parse(text);
+        return evaluate(tree,built_in_environment);
     } catch(err) {
         return err;
     }
