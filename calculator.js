@@ -34,7 +34,7 @@ function parse_term(tokens) {
             term = ['*', term, parse_unary(tokens)];
         }
         else if (read_token('/', tokens)) {
-            term = ['/', term, parse_unary(tokens)]
+            term = ['/', term, parse_unary(tokens)];
         }
         else break;
     }
@@ -50,6 +50,30 @@ function parse_unary(tokens) {
     return parse_factor(tokens);
 }
 
+var built_in_functions = {
+    abs: Math.abs,
+    acos: Math.acos,
+    asin: Math.asin,
+    atan: Math.atan,
+    atan2: Math.atan2, // 2 arg
+    ceil: Math.ceil,
+    cos: Math.cos,
+    exp: Math.exp,
+    floor: Math.floor,
+    log: Math.log,
+    max: Math.max,  // multi-arg
+    min: Math.min,  // multi-arg
+    pow: Math.pow,  // 2 arg
+    round: Math.round,
+    sin: Math.sin,
+    sqrt: Math.sqrt,
+};
+
+var built_in_environment = {
+    pi: Math.PI,
+    e: Math.E,
+}
+
 function parse_factor(tokens) {
     if (read_token('(',tokens)) {
         var exp = parse_expression(tokens);
@@ -58,20 +82,47 @@ function parse_factor(tokens) {
         } else throw 'Missing ) in expression';
     }
     else if (tokens.length > 0) {
-        var n = parseFloat(tokens[0],10);
-        if (isNaN(n)) throw 'Expected a number, got '+String(tokens[0]);
-        tokens.shift();
+        var token = tokens.shift();
+        if (token.search(/[a-zA-Z_]\w*/) != -1) {
+            // variable name
+            if (read_token('(',tokens)) {
+                // a function call, parse the argument(s)
+                var args = [];
+                // code assumes at least one argument
+                while (true) {
+                    args.push(parse_expression(tokens));
+                    if (read_token(',')) continue;
+                    if (read_token(')')) break;
+                    throw "Expected comma or close paraen in function call";
+                }
+                if (!(token in built_in_functions))
+                    throw "Call to unrecognized function: " + token;
+                return ['call '+token].concat(args);
+            }
+            // otherwise its just a reference to a variable
+            return token;
+        }
+        // only option left: a number
+        var n = parseFloat(token,10);
+        if (isNaN(n)) throw 'Expected a number, got '+String(token);
         return n;
     }
     else throw 'Unexpected end of expression';
 }
 
-function evaluate(tree) {
+function evaluate(tree,environment) {
     if (typeof tree == 'number') return tree;
+    else if (typeof tree == 'string') return environment[tree];  // might be undefined
     else {
         // expecting [operator,tree,tree]
         var args = tree.slice(1).map(evaluate);
-        switch (tree[0]) {
+        if (tree[0].search(/^call /) != -1) {
+            // call of built-in function
+            var f = tree[0].slice(4);
+            return built_in_functions[f].apply(args);
+        }
+        // otherwise its just an operator
+        else switch (tree[0]) {
             case 'neg': return -args[0];
             case '+':   return args[0] + args[1];
             case '-':   return args[0] - args[1];
@@ -83,8 +134,8 @@ function evaluate(tree) {
 }
 
 function calculate(text) {
-    // pattern matches integers, parens and the operators +, -, *, /
-    var pattern = /([0-9]*\.)?[0-9]+([eE][-+]?[0-9]+)?|\+|\-|\*|\/|\(|\)/g;
+    // pattern matches integers, variable names, parens and the operators +, -, *, /
+    var pattern = /([0-9]*\.)?[0-9]+([eE][\-+]?[0-9]+)?|[a-zA-Z_]\w*|\+|\-|\*|\/|\(|\)/g;
     var tokens = text.match(pattern);
     try {
         var tree = parse_expression(tokens);
