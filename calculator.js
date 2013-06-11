@@ -1,57 +1,6 @@
 var calculator = (function() {
     exports = {};
 
-    // if first token is t, consume it and return true
-    function read_token(t, tokens) {
-        if (tokens.length > 0 && tokens[0] == t) {
-            tokens.shift();
-            return true;
-        }
-        return false;
-    }
-
-    // builds parse tree for following BNF.  Tree is either a number or
-    // or an array of the form [operator,tree,tree].
-    // <expression> ::= <term> | <expression> "+" <term> | <expression> "-" <term>
-    // <term>       ::= <unary> | <term> "*" <unary> | <term> "/" <unary>
-    // <unary>      ::= <factor> | "-" <factor> | "+" <factor>
-    // <factor>     ::= <number> | "(" <expression> ")"
-    function parse_expression(tokens) {
-        var expression = parse_term(tokens);
-        while (true) {
-            if (read_token('+', tokens)) {
-                expression = ['+', expression, parse_term(tokens)];
-            }
-            else if (read_token('-', tokens)) {
-                expression = ['-', expression, parse_term(tokens)];
-            }
-            else break;
-        }
-        return expression;
-    }
-
-    function parse_term(tokens) {
-        var term = parse_unary(tokens);
-        while (true) {
-            if (read_token('*', tokens)) {
-                term = ['*', term, parse_unary(tokens)];
-            }
-            else if (read_token('/', tokens)) {
-                term = ['/', term, parse_unary(tokens)];
-            }
-            else break;
-        }
-        return term;
-    }
-
-    function parse_unary(tokens) {
-        if (read_token('-', tokens)) {
-            return ['neg', parse_factor(tokens)];
-        }
-        else if (read_token('+', tokens)) {}
-        return parse_factor(tokens);
-    }
-
     var built_in_functions = {
         abs: Math.abs,
         acos: Math.acos,
@@ -84,6 +33,69 @@ var calculator = (function() {
         return env;
     }
     exports.new_environment = new_environment;
+
+// if first token is t, consume it and return true
+    function read_token(t, tokens) {
+        if (tokens.length > 0 && tokens[0] == t) {
+            tokens.shift();
+            return true;
+        }
+        return false;
+    }
+
+    // builds parse tree for following BNF.  Tree is either a number or
+    // or an array of the form [operator,tree,tree].
+    // <expression> ::= <term> | <expression> "+" <term> | <expression> "-" <term>
+    // <term>       ::= <unary> | <term> "*" <unary> | <term> "/" <unary>
+    // <unary>      ::= <factor> | "-" <factor> | "+" <factor>
+    // <factor>     ::= <number> | "(" <expression> ")"
+    function parse_expression(tokens) {
+        var expression = parse_term(tokens);
+        while (true) {
+            if (read_token('+', tokens)) {
+                expression = ['+', expression, parse_term(tokens)];
+            }
+            else if (read_token('-', tokens)) {
+                expression = ['-', expression, parse_term(tokens)];
+            }
+            else break;
+        }
+        return expression;
+    }
+
+    function parse_term(tokens) {
+        var term = parse_exp(tokens);
+        while (true) {
+            if (read_token('*', tokens)) {
+                term = ['*', term, parse_exp(tokens)];
+            }
+            else if (read_token('/', tokens)) {
+                term = ['/', term, parse_exp(tokens)];
+            }
+            else break;
+        }
+        return term;
+    }
+
+    function parse_exp(tokens) {
+        var term = parse_unary(tokens);
+        while (true) {
+            if (read_token('^', tokens)) {
+                term = ['^', term, parse_unary(tokens)];
+            }
+            else break;
+        }
+        return term;
+    }
+
+function parse_unary(tokens) {
+        if (read_token('-', tokens)) {
+            return ['neg', parse_factor(tokens)];
+        }
+        else if (read_token('+', tokens)) {}
+        return parse_factor(tokens);
+    }
+
 
     function parse_factor(tokens) {
         if (read_token('(', tokens)) {
@@ -128,7 +140,7 @@ var calculator = (function() {
         else {
             // expecting [operator,tree,...]
             var args = tree.slice(1).map(function(subtree) {
-                return evaluate(subtree, environment)
+                return evaluate(subtree, environment);
             });
             if (tree[0].search(/^call /) != -1) {
                 // call of built-in function
@@ -149,6 +161,8 @@ var calculator = (function() {
                 return args[0] * args[1];
             case '/':
                 return args[0] / args[1];
+            case '^':
+                return Math.pow(args[0],args[1]);   
             default:
                 throw 'Unrecognized operator ' + tree[0];
             }
@@ -158,7 +172,7 @@ var calculator = (function() {
 
     function parse(text) {
         // pattern matches integers, variable names, parens and the operators +, -, *, /
-        var pattern = /([0-9]*\.)?[0-9]+([eE][\-+]?[0-9]+)?|[a-zA-Z_]\w*|\+|\-|\*|\/|\(|\)|\,/g;
+        var pattern = /([0-9]*\.)?[0-9]+([eE][\-+]?[0-9]+)?|[a-zA-Z_]\w*|\+|\-|\*|\/|\^|\(|\)|\,/g;
         var tokens = text.match(pattern);
         return parse_expression(tokens);
     }
