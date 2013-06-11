@@ -3,6 +3,15 @@
 <title>Day 1 Code</title>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
 <script src="calculator.js"></script>
+<script>
+$(document).ready(function() {
+    // look for nodes of class "calculator" and set them up
+    $('.calculator').each(function() {
+        console.log(this);
+        calculator.setup_calc(this);
+    });
+});
+</script>
 </head>
 <body>
 Hello world!
