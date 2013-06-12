@@ -5,6 +5,7 @@ var graphcalc = (function () {
     function graph(canvas,expression,x1,x2) {
         var w = canvas.width;
         var h = canvas.height;
+	var ctx;
         
         var tree,v1,v2;
         try {
@@ -50,7 +51,7 @@ var graphcalc = (function () {
             canvas.bg_image = bg_image;   // save for event handlers
             bg_image.width = w;
             bg_image.height = h;
-            var ctx = bg_image.getContext('2d');
+            ctx = bg_image.getContext('2d');
             ctx.fillStyle = "#FFFFFF";
             ctx.fillRect(0,0,w,h);
             ctx.beginPath();
@@ -69,9 +70,11 @@ var graphcalc = (function () {
             ctx.drawImage(bg_image,0,0);
         } catch (err) {
             // display error message in middle of canvas
+	    ctx = canvas.getContext('2d');
             ctx.textBaseline = "middle";
             ctx.textAlign = "center";
             ctx.font = "20px Georgia";
+	    ctx.fillStyle = "black";
             ctx.fillText(err,w/2,h/2);
         }
     }
