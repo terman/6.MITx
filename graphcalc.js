@@ -22,6 +22,7 @@ var graphcalc = (function () {
             var y = [];
             var e = {e: Math.E, pi: Math.pi};
             var step = (v2-v1)/w;
+	    if (step == 0) { v2 = v1 + 1; step = 1/w; }
             for (var v = v1; v <= v2; v += step) {
                 x.push(v);
                 e.x = v;
@@ -36,6 +37,7 @@ var graphcalc = (function () {
             var ymin = Math.min.apply(null,y);
             var ymax = Math.max.apply(null,y);
             var yextra = (ymax - ymin)/10;
+	    if (yextra == 0) yextra = 1;
             ymin -= yextra;
             ymax += yextra;
             var yscale = (ymax - ymin)/h;
@@ -82,7 +84,21 @@ var graphcalc = (function () {
     // using array of xdata and ydata, interpolate y value
     // given a particular x
     function interpolate(xdata,ydata,x) {
-        return x;
+        for (var i = 0; i < xdata.length; i += 1) {
+            if (x < xdata[i]) {
+                // t falls between times[i-1] and times[i]
+                var t1 = (i === 0) ? xdata[0] : xdata[i - 1];
+                var t2 = xdata[i];
+
+                if (t2 === undefined) return undefined;
+
+                var v1 = (i === 0) ? ydata[0] : ydata[i - 1];
+                var v2 = ydata[i];
+                var v = v1;
+                if (x != t1) v += (x - t1) * (v2 - v1) / (t2 - t1);
+                return v;
+            }
+        }
     }
     
     // called from mousemove event handler.  Canvas is the jQuery object
@@ -94,6 +110,10 @@ var graphcalc = (function () {
         // no data, nothing to measure :)
         if (c.x_data === undefined) return;
         
+        var xintersect = mx*c.x_scale + c.x_data[0];
+        var yintersect = interpolate(c.x_data,c.y_data,xintersect);
+        var my = (c.y_max - yintersect)/c.y_scale;
+
         // redraw background followed by vertical cursor overlay
         var ctx = c.getContext('2d');
         ctx.drawImage(c.bg_image,0,0);
@@ -102,15 +122,14 @@ var graphcalc = (function () {
         ctx.beginPath();
         ctx.moveTo(mx,0);
         ctx.lineTo(mx,c.height);
+        ctx.moveTo(0,my);
+        ctx.lineTo(c.width,my);
         ctx.stroke();
         
         // add intersection information
-        // var xintersect = mx*c.x_scale + c.x_data[0];
-        // var yintersect = interpolate(c.x_data,c.y_data,xintersect);
-        // var my = (c.y_max - yintersect)/c.y_scale;
-        // ctx.font = "10px Arial";
-        // ctx.fillStyle = "black";
-        // ctx.fillText(xintersect+","+yintersect,mx,100);
+        ctx.font = "10px Arial";
+        ctx.fillStyle = "black";
+        ctx.fillText(xintersect.toExponential(2)+","+yintersect.toExponential(2),mx,my);
     }
     
     function setup(div) {
