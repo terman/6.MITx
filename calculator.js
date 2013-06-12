@@ -88,7 +88,7 @@ var calculator = (function() {
         return term;
     }
 
-function parse_unary(tokens) {
+    function parse_unary(tokens) {
         if (read_token('-', tokens)) {
             return ['neg', parse_factor(tokens)];
         }
