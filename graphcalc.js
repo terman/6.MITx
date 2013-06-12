@@ -1,13 +1,10 @@
 var graphcalc = (function () {
     var exports = {};
     
+    // canvas is the DOM object
     function graph(canvas,expression,x1,x2) {
-        var ctx = canvas[0].getContext('2d');
-        var w = canvas.width();
-        var h = canvas.height();
-        canvas[0].width = w;
-        canvas[0].height = h;
-        ctx.clearRect(0,0,w,h);
+        var w = canvas.width;
+        var h = canvas.height;
         
         var tree,v1,v2;
         try {
@@ -22,7 +19,7 @@ var graphcalc = (function () {
             }
             var x = [];
             var y = [];
-            var e = calculator.new_environment();
+            var e = {e: Math.E, pi: Math.pi};
             var step = (v2-v1)/w;
             for (var v = v1; v <= v2; v += step) {
                 x.push(v);
@@ -30,6 +27,8 @@ var graphcalc = (function () {
                 y.push(calculator.evaluate(tree,e));
             }
             var npoints = x.length;
+            canvas.x_data = x;           // save for event handlers
+            canvas.y_data = y;
             
             // step 2: figure out plot scale
             var xscale = (x[npoints-1]-x[0])/w;
@@ -42,8 +41,18 @@ var graphcalc = (function () {
             function xform(xv,yv) {
                 return {x: (xv-x[0])/xscale, y: (ymax - yv)/yscale};
             }
+            canvas.x_scale = xscale;     // save for event handlers
+            canvas.y_scale = yscale;
+            canvas.y_max = ymax;
             
-            // step 3: plot points
+            // step 3: plot points into background image
+            var bg_image = $('<canvas></canvas>')[0];
+            canvas.bg_image = bg_image;   // save for event handlers
+            bg_image.width = w;
+            bg_image.height = h;
+            var ctx = bg_image.getContext('2d');
+            ctx.fillStyle = "#FFFFFF";
+            ctx.fillRect(0,0,w,h);
             ctx.beginPath();
             var pt = xform(x[0],y[0]); ctx.moveTo(pt.x,pt.y);
             for (var i = 1; i < npoints; i += 1) {
@@ -51,8 +60,13 @@ var graphcalc = (function () {
                 ctx.lineTo(pt.x,pt.y);
             }
             ctx.lineWidth = 3;
+            ctx.lineCap = "round";
             ctx.strokeStyle = "red";
             ctx.stroke();
+            
+            // step 4: paint background on canvas
+            ctx = canvas.getContext('2d');
+            ctx.drawImage(bg_image,0,0);
         } catch (err) {
             // display error message in middle of canvas
             ctx.textBaseline = "middle";
@@ -60,6 +74,40 @@ var graphcalc = (function () {
             ctx.font = "20px Georgia";
             ctx.fillText(err,w/2,h/2);
         }
+    }
+    
+    // using array of xdata and ydata, interpolate y value
+    // given a particular x
+    function interpolate(xdata,ydata,x) {
+        return x;
+    }
+    
+    // called from mousemove event handler.  Canvas is the jQuery object
+    function measure(canvas,ex) {
+        var c = canvas[0];
+        var offset = canvas.offset();
+        var mx = ex - offset.left;
+        
+        // no data, nothing to measure :)
+        if (c.x_data === undefined) return;
+        
+        // redraw background followed by vertical cursor overlay
+        var ctx = c.getContext('2d');
+        ctx.drawImage(c.bg_image,0,0);
+        ctx.lineWidth = 0.5;
+        ctx.strokeStyle = "#C0C0C0";
+        ctx.beginPath();
+        ctx.moveTo(mx,0);
+        ctx.lineTo(mx,c.height);
+        ctx.stroke();
+        
+        // add intersection information
+        // var xintersect = mx*c.x_scale + c.x_data[0];
+        // var yintersect = interpolate(c.x_data,c.y_data,xintersect);
+        // var my = (c.y_max - yintersect)/c.y_scale;
+        // ctx.font = "10px Arial";
+        // ctx.fillStyle = "black";
+        // ctx.fillText(xintersect+","+yintersect,mx,100);
     }
     
     function setup(div) {
@@ -76,10 +124,16 @@ var graphcalc = (function () {
         div2.append('min x:',minx,'max x:',maxx);
         
         button.on("click",function() {
+            canvas[0].width = canvas.width();
+            canvas[0].height = canvas.height();
             var exp = expression.val();
             var x1 = minx.val();
             var x2 = maxx.val();
-            graph(canvas,exp,x1,x2);
+            graph(canvas[0],exp,x1,x2);
+        });
+        
+        canvas.on("mousemove",function(event) {
+            measure(canvas,event.pageX);
         });
    
         $(div).append(canvas,div1,div2,button);

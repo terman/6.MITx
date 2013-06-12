@@ -104,7 +104,9 @@ var coords = [];
 for (var i = 0; i < 50000; i += 1) {
     coords.push([Math.random()*200,Math.random()*200]);
 }
-function complicated_figure(ctx) {
+function complicated_figure(ctx,w,h) {
+    ctx.fillStyle = "#FFFFFF";
+    ctx.fillRect(0,0,w,h);
     for (var i = 0; i < coords.length; i += 1) {
         ctx.beginPath();
         ctx.strokeStyle = "grey";
@@ -123,7 +125,8 @@ function test_mouse() {
     var bg_image = $("<canvas></canvas>")[0];
     bg_image.width = 200;
     bg_image.height = 200;
-    complicated_figure(bg_image.getContext('2d'));
+    var bctx = bg_image.getContext('2d');
+    complicated_figure(bctx,200,200);
     ctx.drawImage(bg_image,0,0);
     
     canvas.bind("mousemove",function(event) {
