@@ -103,15 +103,16 @@ var graphcalc = (function () {
     
     // called from mousemove event handler.  Canvas is the jQuery object
     function measure(canvas,ex) {
+        // no data, nothing to measure :)
+        if (c.x_data === undefined) return;
+        
         var c = canvas[0];
         var offset = canvas.offset();
         var mx = ex - offset.left;
         
-        // no data, nothing to measure :)
-        if (c.x_data === undefined) return;
-        
         var xintersect = mx*c.x_scale + c.x_data[0];
         var yintersect = interpolate(c.x_data,c.y_data,xintersect);
+	if (yintersect === undefined) return;
         var my = (c.y_max - yintersect)/c.y_scale;
 
         // redraw background followed by vertical cursor overlay
