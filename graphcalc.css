@@ -18,9 +18,9 @@
 
 .graphcalc input {
     margin: 5px;
-    width: 148px;
+    width: 30%;
 }
 
 .graphcalc #expression {
-    width: 90%;
+    width: 80%;
 }

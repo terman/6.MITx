@@ -127,7 +127,7 @@ var calculator = (function() {
             }
             // only option left: a number
             var n = parseFloat(token, 10);
-            if (isNaN(n)) throw 'Expected a number, got ' + String(token);
+            if (isNaN(n)) throw 'Expected an operand, got ' + String(token);
             return n;
         }
         else throw 'Unexpected end of expression';
@@ -171,9 +171,11 @@ var calculator = (function() {
     exports.evaluate = evaluate;
 
     function parse(text) {
+        if (text === null || text === undefined) text = "";
         // pattern matches integers, variable names, parens and the operators +, -, *, /
         var pattern = /([0-9]*\.)?[0-9]+([eE][\-+]?[0-9]+)?|[a-zA-Z_]\w*|\+|\-|\*|\/|\^|\(|\)|\,/g;
         var tokens = text.match(pattern);
+	if (tokens == null || tokens.length == 0) throw "No expression found!";
         return parse_expression(tokens);
     }
     exports.parse = parse;

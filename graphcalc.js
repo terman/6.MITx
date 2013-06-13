@@ -78,7 +78,7 @@ var graphcalc = (function () {
             ctx.font = "20px Georgia";
 	    ctx.fillStyle = "black";
             ctx.fillText(err,w/2,h/2);
-        }
+	}
     }
     
     // using array of xdata and ydata, interpolate y value
