@@ -1,0 +1,42 @@
+<html>
+<head>
+<title>Knapsack Problem</title>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
+<script src="knapsack.js"></script>
+<link rel="stylesheet" type="text/css" href="knapsack.css">
+</head>
+<body style="width: 800px">
+<h2>The Buglar's Dilema</h2>
+
+<p><center>
+<img src="house.png" width="400"><img src="burglar.png" width="200">
+</center>
+
+<p>Being a burglar isn't easy!  Our friend above has just entered a
+mansion and is trying to decide what to take.  Unfortunately his
+knapsack only holds 20kg.  What strategy should he use in picking
+objects so as to maximize the value of his haul?
+
+<p>Let's try out three possible strategies.  Considering the items
+remaining to be taken, the burglar chooses to take the item according
+to
+
+<ol>
+<li>"Max Value" -- choose the item with the greatest value</li>
+<li>"Min Weight" -- choose the time with the least weight</li>
+<li>"Max Value/Weight" -- choose the item with the largest value-to-weight ratio</li>
+</ol>
+
+<p>Try out each strategy using the simulation below and record the
+total value of all the items in the knapsack.
+
+<div class="knapsack" data-maxweight="20">
+  <img src="clock.png" data-value="175" data-weight="10" data-name="clock">
+  <img src="painting.png" data-value="90" data-weight="9" data-name="painting">
+  <img src="radio.png" data-value="20" data-weight="4" data-name="radio">
+  <img src="vase.png" data-value="50" data-weight="2" data-name="vase">
+  <img src="book.png" data-value="10" data-weight="1" data-name="book">
+  <img src="computer.png" data-value="200" data-weight="20" data-name="computer">
+</div>
+</body>
+</html>

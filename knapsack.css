@@ -1,0 +1,24 @@
+.knapsack .location {
+  display: inline-block;
+  margin: 5px;
+  padding: 10px;
+  background-color: #C0C0C0;
+}
+.knapsack .header {
+  text-align: center;
+  font-size: 150%;
+}
+.knapsack .items {
+  margin: 5px;
+  border: 1px solid black;
+  background-color: #FFFFFF;
+  height: 300px;
+  width: 300px;
+}
+.knapsack .item {
+  margin: 3px;
+  width: 90px;
+}
+.knapsack .footer {
+  text-align: center;
+}

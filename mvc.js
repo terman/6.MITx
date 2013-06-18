@@ -29,7 +29,7 @@ var counter = (function () {
     //   add_observer(observer)   // call observer("increment") when counter increments
     //   increment()		  // increment counter value
     //   value = get_count()      // returns current counter value
-    function CounterModel() {
+    function Model() {
 	var count = 0;
 	var observers = Observers();
 
@@ -47,7 +47,7 @@ var counter = (function () {
 
     // exports:
     //   increment()		// call to process increment request
-    function CounterController(model) {
+    function Controller(model) {
 	function increment() {
 	    model.increment();
 	}
@@ -58,7 +58,7 @@ var counter = (function () {
 
     // exports:
     //   none
-    function CounterView(div,model,controller,color) {
+    function View(div,model,controller,color) {
 	var display = $('<div class="view">The current value of the counter is <span>0</span>.</div>');
 	var counter_value = display.find('span');
 	display.css("background-color",color || "white");
@@ -81,10 +81,10 @@ var counter = (function () {
 
 
     function setup(div) {
-	var model = CounterModel();
-	var controller = CounterController(model);
-	var view = CounterView(div,model,controller);
-	var view2 = CounterView(div,model,controller,'#E0FFE0');
+	var model = Model();
+	var controller = Controller(model);
+	var view = View(div,model,controller);
+	var view2 = View(div,model,controller,'#E0FFE0');
 
 	var button = $('<button>Increment</button>');
 	button.on("click",controller.increment);
