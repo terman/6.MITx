@@ -54,12 +54,10 @@ var counter = (function () {
 
     // exports:
     //   none
-    function View(div,model,controller) {
-	var display = $('<p>The current value of the counter is <span>0</span>.</p>');
+    function View(div,model,controller,color) {
+	var display = $('<div class="view">The current value of the counter is <span>0</span>.</div>');
 	var counter_value = display.find('span');
-
-	var button = $('<button>Increment</button>');
-	button.on("click",controller.increment);
+	display.css("background-color",color || "white");
 
 	function update_display() {
 	    counter_value.text(String(model.get_count()));
@@ -71,7 +69,7 @@ var counter = (function () {
 
 	model.add_observer(notification);
 
-	div.append(display,button);
+	div.append(display);
 	update_display();
 
 	return {};
@@ -82,8 +80,11 @@ var counter = (function () {
 	var model = Model();
 	var controller = Controller(model);
 	var view = View(div,model,controller);
+	var view2 = View(div,model,controller,'#E0FFE0');
 
-	var view2 = View(div,model,controller);
+	var button = $('<button>Increment</button>');
+	button.on("click",controller.increment);
+	div.append(button);
     }
 
     // items accessible to outsiders
