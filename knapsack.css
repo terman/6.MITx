@@ -1,12 +1,18 @@
+body {
+  margin: 0px auto;
+}
 .knapsack .location {
   display: inline-block;
   margin: 5px;
   padding: 10px;
-  background-color: #C0C0C0;
 }
 .knapsack .header {
   text-align: center;
   font-size: 150%;
+}
+.knapsack .header img {
+  height: 100px;
+  vertical-align: middle;
 }
 .knapsack .items {
   margin: 5px;
@@ -16,9 +22,31 @@
   width: 300px;
 }
 .knapsack .item {
+  display: inline-block;
   margin: 3px;
+  text-align: center;
+  font-size: smaller;
+  font-style: italic;
+  text-indent: 0;
+}
+.knapsack .item img {
   width: 90px;
 }
 .knapsack .footer {
   text-align: center;
+}
+.knapsack .alert {
+  position: relative;
+  left: 180px;
+  top: 300px;
+  width: 300px;
+  padding: 20px;
+  z-index: 10;
+  text-align: center;
+  vertical-align: middle;
+  font-style: bold;
+  background-color: #000000;
+  color: #FFFFFF;
+  pointer-events: none;
+  opacity: 0;
 }
