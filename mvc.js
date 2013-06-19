@@ -1,54 +1,66 @@
 var counter = (function () {
-    // implement Observable interface
-    function Observers() {
-	var observers = [];
+    // Event manager (see backbone.js for a "real" implementation)
+    //   .on(event_string,callback)
+    //   .trigger(event,data)
+    function EventManager() {
+	var handlers = {};   // maps event_string -> list of callbacks
 
-	// add a new callback function to the list of observers
-	function add(observer) {
-	    observers.push(observer);
-	}
+	// arrange for callback when event_string is triggered
+	function on(event_string,callback) {
+	    // current list of callbacks for this event_string
+	    var cblist = handlers[event_string];
 
-	// remove observer from list
-	function remove(observer) {
-	    var i = observers.indexOf(observer);
-	    if (i != -1) observers.splice(i,1);
-	}
-
-	// invoke each callback with message argument
-	function notify(message) {
-	    for (var i = 0; i < observers.length; i += 1) {
-		observers[i](message);
+	    // ah, first time event_string has been mentioned
+	    if (cblist === undefined) {
+		cblist = [];   // empty list
+		handlers[event_string] = cblist;
 	    }
+
+	    // add callback to list
+	    cblist.push(callback);
 	}
 
-	return {add: add, remove: remove, notify: notify};
+	// call all the callbacks associated with event_string,
+	// provide data as the argument
+	function trigger(event_string,data) {
+	    // current list of callbacks for this event_string
+	    var cblist = handlers[event_string];
+
+	    if (cblist !== undefined)
+		for (var i = 0; i < cblist.length; i += 1)
+		    cblist[i](data);
+	}
+
+	// externally accessible vars & functions
+	return {on: on, trigger: trigger};
     }
 
-
     // exports:
-    //   add_observer(observer)   // call observer("increment") when counter increments
+    //   on(event_string.callback)
     //   increment()		  // increment counter value
+    //     -- triggers "increment" event with updated value as data
     //   value = get_count()      // returns current counter value
     function Model() {
 	var count = 0;
-	var observers = Observers();
+	var event_handlers = EventManager();
 
 	function increment() {
 	    count += 1;
-	    observers.notify("increment");
+	    event_handlers.trigger("increment",count);
 	}
 
 	function get_count() {
 	    return count;
 	}
 	
-	return {add_observer: observers.add, increment: increment, get_count: get_count};
+	return {on: event_handlers.on, increment: increment, get_count: get_count};
     }
 
     // exports:
     //   increment()		// call to process increment request
     function Controller(model) {
 	function increment() {
+	    // not much logic to handling this user input :)
 	    model.increment();
 	}
 
@@ -59,22 +71,18 @@ var counter = (function () {
     // exports:
     //   none
     function View(div,model,controller,color) {
+	// user a simple div containing text to display counter value
 	var display = $('<div class="view">The current value of the counter is <span>0</span>.</div>');
 	var counter_value = display.find('span');
 	display.css("background-color",color || "white");
-
-	function update_display() {
-	    counter_value.text(String(model.get_count()));
-	}
-
-	function notification(message) {
-	    if (message == "increment") update_display();
-	}
-
-	model.add_observer(notification);
-
 	div.append(display);
-	update_display();
+	update_display(model.get_count());
+
+	// update display when model changes
+	function update_display(value) {
+	    counter_value.text(value);
+	}
+	model.on("increment",update_display);
 
 	return {};
     }

@@ -1,38 +1,51 @@
 var knapsack = (function () {
-    // implement Observable interface
-    function Observers() {
-	var observers = [];
+    // Event manager (see backbone.js for a "real" implementation)
+    //   .on(event_string,callback)
+    //   .trigger(event,data)
+    function EventManager() {
+	var handlers = {};   // maps event_string -> list of callbacks
 
-	// add a new callback function to the list of observers
-	function add(observer) {
-	    observers.push(observer);
-	}
+	// arrange for callback when event_string is triggered
+	function on(event_string,callback) {
+	    // current list of callbacks for this event_string
+	    var cblist = handlers[event_string];
 
-	// remove observer from list
-	function remove(observer) {
-	    var i = observers.indexOf(observer);
-	    if (i != -1) observers.splice(i,1);
-	}
-
-	// invoke each callback with message argument
-	function notify(message) {
-	    for (var i = 0; i < observers.length; i += 1) {
-		observers[i](message);
+	    // ah, first time event_string has been mentioned;
+	    if (cblist === undefined) {
+		cblist = [];   // empty list
+		handlers[event_string] = cblist;
 	    }
+
+	    // add callback to list
+	    cblist.push(callback);
 	}
 
-	return {add: add, remove: remove, notify: notify};
+	// call all the callbacks associated with event_string,
+	// provide data as the argument
+	function trigger(event_string,data) {
+	    // current list of callbacks for this event_string
+	    var cblist = handlers[event_string];
+
+	    if (cblist !== undefined)
+		for (var i = 0; i < cblist.length; i += 1)
+		    cblist[i](data);
+	}
+
+	// externally accessible vars & functions
+	return {on: on, trigger: trigger};
     }
 
-
     // exports:
-    //   add_observer(observer)   // call observer("increment") when counter increments
+    //   on(event_string,callback)  // add event handler
+    //   reset()                  // move all items to house
+    //      -- triggers "item moved" event
     //   move_item(item)          // change item location from house to knapsack or vice versa
+    //      -- may trigger "item moved" event, with moved item as data
     //   value = get_items()
     //   value = knapsack_weight()
     //   value = knapsack_value()
     function Model(items,knapsack_max) {
-	var observers = Observers();
+	var event_handlers = EventManager();
 	var knapsack_weight = 0;
 	var knapsack_value = 0;
 
@@ -41,7 +54,7 @@ var knapsack = (function () {
 	    for (var item_name in items) items[item_name].location = "house";
 	    knapsack_value = 0;
 	    knapsack_weight = 0;
-	    observers.notify("item moved");
+	    event_handlers.trigger("item moved");
 	}
 
 	// return true if move was okay, false if knapsack capacity exceeded
@@ -58,7 +71,7 @@ var knapsack = (function () {
 		knapsack_weight -= item.weight;
 		knapsack_value -= item.value;
 	    }
-	    observers.notify("item moved");
+	    event_handlers.trigger("item moved",item);
 	    return true;
 	}
 
@@ -66,7 +79,8 @@ var knapsack = (function () {
 	function get_value() { return knapsack_value; }
 	function get_weight() { return knapsack_weight; }
 
-	return {add_observer: observers.add,
+	// externally accessible vars & functions
+	return {on: event_handlers.on,
 		reset: reset,
 		move_item: move_item,
 		get_items: get_items,
@@ -75,15 +89,17 @@ var knapsack = (function () {
     }
 
     // exports:
-    //   add_observer()
-    //   increment()		// call to process increment request
+    //   on(event_string,callback)
+    //   item_clicked(item)     // signal item has been clicked
+    //     -- may trigger "knapsack overflow" event with offending item as data
+    //   reset()                // back to the initial state!
     function Controller(model) {
-	var observers = Observers();
+	var event_handlers = EventManager();
 
 	function item_clicked(item) {
 	    if (!model.move_item(item)) {
 		// oops, knapsack overflow!
-		observers.notify("knapsack overflow");
+		event_handlers.trigger("knapsack overflow",item);
 	    }
 	}
 
@@ -91,7 +107,8 @@ var knapsack = (function () {
 	    model.reset();
 	}
 
-	return { add_observer: observers.add, item_clicked: item_clicked, reset: reset }
+	// externally accessible vars & functions
+	return { on: event_handlers.on, item_clicked: item_clicked, reset: reset }
     }
 
 
@@ -130,10 +147,11 @@ var knapsack = (function () {
 	var weight = knapsack.find('#weight');
 	var value = knapsack.find('#value');
 
+	// add them to .knapsack div
 	div.append(house,knapsack);
-	position_items();
 
-	// set up item display for house and knapsack using model info
+	// items have changed location so (re)do item display for
+	// house and knapsack using model info
 	function position_items() {
 	    // clear out both locations
 	    house_items.empty();
@@ -149,26 +167,22 @@ var knapsack = (function () {
 	    weight.text(model.get_weight());
 	    value.text(model.get_value());
 	}
+	model.on("item moved",position_items);
 
-	// make alter visible for 3 seconds
+	// knapsack overflow event
 	function show_alert() {
+	    // make alert visible for a total of 3 seconds
 	    alert.animate({opacity: 1},1000);
 	    alert.animate({opacity: 1},1000); // pause
 	    alert.animate({opacity: 0},1000);
 	}
+	controller.on("knapsack overflow",show_alert);
 
-	// handle notifications from the model, controller
-	function notify(message) {
-	    if (message == "item moved") position_items();
-	    if (message == "knapsack overflow") show_alert();
-	}
-	model.add_observer(notify);
-	controller.add_observer(notify);
-
+	// externally accessible vars & functions
 	return {};
     }
 
-
+    // add appropriate internals to div.knapsack nodes in DOM
     function setup(div) {
 	// extract item list from div body
 	var items = {};
@@ -182,10 +196,12 @@ var knapsack = (function () {
 	    });
 	div.empty();  // clear it out!
 
-	var model = Model(items,parseFloat(div.attr('data-maxweight')));   // max weight in knapsack: 20
+	var max_weight = parseFloat(div.attr('data-maxweight') || 20);
+	var model = Model(items,max_weight);
 	var controller = Controller(model);
 	var view = View(div,model,controller);
 
+	// initialize starting location for all items
 	model.reset();
     }
 
